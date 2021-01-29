@@ -1,9 +1,9 @@
 using System;
 using System.Windows;
 using System.Windows.Input;
-using MaterialDesignColors.WpfExample.Domain;
+using MaterialDesignDemo.Domain;
 
-namespace MaterialDesignColors.WpfExample
+namespace MaterialDesignDemo
 {
     public partial class Buttons
     {
@@ -32,7 +32,7 @@ namespace MaterialDesignColors.WpfExample
             if (CountingBadge.Badge == null || Equals(CountingBadge.Badge, string.Empty))
                 CountingBadge.Badge = 0;
 
-            var next = int.Parse(CountingBadge.Badge.ToString()) + 1;
+            var next = int.Parse(CountingBadge.Badge.ToString() ?? "0") + 1;
 
             CountingBadge.Badge = next < 21 ? (object)next : null;
         }

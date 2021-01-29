@@ -1,6 +1,5 @@
-﻿using MaterialDesignColors.WpfExample.Domain;
+﻿using System.Windows.Navigation;
 using MaterialDesignDemo.Domain;
-using System.Windows.Navigation;
 
 namespace MaterialDesignDemo
 {

@@ -6,26 +6,39 @@ using System.Windows.Media;
 
 namespace MaterialDesignThemes.Wpf.Converters
 {
-    public class FloatingHintOffsetCalculationConverter : IMultiValueConverter
+    internal class FloatingHintOffsetCalculationConverter : IMultiValueConverter
     {
-        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        public object Convert(object[] values, Type targetType, object? parameter, CultureInfo culture)
         {
-            double height = 0;
-            if (values[0] is FontFamily fontFamily
-                && values[1] is double fontSize
-                && values[2] is double floatingScale)
-                height = fontFamily.LineSpacing * fontSize * floatingScale;
+            var fontFamily = (FontFamily)values[0];
+            double fontSize = (double)values[1];
+            double floatingScale = (double)values[2];
 
-            if (values.Length > 3 && values[3] is Thickness padding)
-                height = height / 2 + padding.Top;
+            double hintHeight = fontFamily.LineSpacing * fontSize;
+            double floatingHintHeight = hintHeight * floatingScale;
 
-            if (targetType == typeof(Point)) // offset
-                return new Point(0, -height); 
-            if (targetType == typeof(Thickness)) // margin
-                return new Thickness(0, height, 0, 0);
+            double offset = (values.Length > 3 ? values[3] : null) switch
+            {
+                Thickness padding => floatingHintHeight / 2 + padding.Top,
+                double parentHeight => (parentHeight - hintHeight + floatingHintHeight) / 2,
+                _ => floatingHintHeight
+            };
+
+            if (IsType<Point>(targetType))
+            {
+                return new Point(0, -offset);
+            }
+
+            if (IsType<Thickness>(targetType))
+            {
+                return new Thickness(0, offset, 0, 0);
+            }
+
             throw new NotSupportedException(targetType.FullName);
         }
 
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => throw new NotSupportedException();
+
+        private bool IsType<T>(Type type) => type == typeof(T);
     }
 }
