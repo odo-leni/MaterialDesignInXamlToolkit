@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -9,11 +10,11 @@ using XamlTest;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace MaterialDesignThemes.UITests.WPF.TextBox
+namespace MaterialDesignThemes.UITests.WPF.TextBoxes
 {
     public class TextBoxTests : TestBase
     {
-        public TextBoxTests(ITestOutputHelper output) 
+        public TextBoxTests(ITestOutputHelper output)
             : base(output)
         {
         }
@@ -25,15 +26,15 @@ namespace MaterialDesignThemes.UITests.WPF.TextBox
             await using var recorder = new TestRecorder(App);
 
             //Arrange
-            IVisualElement grid = await LoadXaml(@"
+            var grid = await LoadXaml<Grid>(@"
 <Grid Margin=""30"">
     <TextBox VerticalAlignment=""Top""
              Text=""Some Text""
              materialDesign:TextFieldAssist.HasClearButton=""True"">
     </TextBox>
 </Grid>");
-            IVisualElement textBox = await grid.GetElement("/TextBox");
-            IVisualElement clearButton = await grid.GetElement("PART_ClearButton");
+            var textBox = await grid.GetElement<TextBox>("/TextBox");
+            var clearButton = await grid.GetElement<Button>("PART_ClearButton");
 
             await textBox.MoveKeyboardFocus();
             //Delay needed to accout for transition storyboard
@@ -42,7 +43,7 @@ namespace MaterialDesignThemes.UITests.WPF.TextBox
             double initialHeight = await textBox.GetActualHeight();
 
             //Act
-            await clearButton.Click();
+            await clearButton.LeftClick();
 
             //Assert
             await Task.Delay(MaterialDesignTextBox.FocusedAimationTime);
@@ -60,7 +61,7 @@ namespace MaterialDesignThemes.UITests.WPF.TextBox
             await using var recorder = new TestRecorder(App);
 
             //Arrange
-            IVisualElement grid = await LoadXaml(@"
+            var grid = await LoadXaml<Grid>(@"
 <Grid Margin=""30"">
     <TextBox Style=""{StaticResource MaterialDesignFloatingHintTextBox}""
         VerticalAlignment=""Top""
@@ -75,8 +76,8 @@ namespace MaterialDesignThemes.UITests.WPF.TextBox
          </materialDesign:HintAssist.Hint >
     </TextBox>
 </Grid>");
-            IVisualElement textBox = await grid.GetElement("/TextBox");
-            IVisualElement clearButton = await grid.GetElement("PART_ClearButton");
+            var textBox = await grid.GetElement<TextBox>("/TextBox");
+            var clearButton = await grid.GetElement<Button>("PART_ClearButton");
 
             double initialHeight = await textBox.GetActualHeight();
 
@@ -99,13 +100,13 @@ namespace MaterialDesignThemes.UITests.WPF.TextBox
             await using var recorder = new TestRecorder(App);
 
             //Arrange
-            IVisualElement grid = await LoadXaml(@"
+            var grid = await LoadXaml<Grid>(@"
 <Grid>
     <TextBox Style=""{StaticResource MaterialDesignFilledTextBox}""
              materialDesign:HintAssist.Hint=""Floating hint in a box""
              VerticalAlignment=""Top""/>
 </Grid>");
-            IVisualElement textBox = await grid.GetElement("/TextBox");
+            var textBox = await grid.GetElement<TextBox>("/TextBox");
 
             Rect initialRect = await textBox.GetCoordinates();
             double initialHeight = await textBox.GetActualHeight();
@@ -130,7 +131,7 @@ namespace MaterialDesignThemes.UITests.WPF.TextBox
         {
             await using var recorder = new TestRecorder(App);
 
-            IVisualElement grid = await LoadXaml(@"
+            var grid = await LoadXaml<Grid>(@"
 <Grid Background=""Red"">
     <TextBox
         Style=""{StaticResource MaterialDesignOutlinedTextBox}""
@@ -141,10 +142,10 @@ namespace MaterialDesignThemes.UITests.WPF.TextBox
         Margin=""30""
         materialDesign:HintAssist.Hint=""This is a text area""/>
 </Grid>");
-            IVisualElement textBox = await grid.GetElement("/TextBox");
+            var textBox = await grid.GetElement<TextBox>("/TextBox");
             //textFieldGrid is the element just inside of the border
-            IVisualElement textFieldGrid = await textBox.GetElement("grid");
-            IVisualElement hintBackground = await textBox.GetElement("HintBackgroundBorder");
+            var textFieldGrid = await textBox.GetElement<Grid>("grid");
+            var hintBackground = await textBox.GetElement<Border>("HintBackgroundBorder");
 
             Color background = await hintBackground.GetEffectiveBackground(textFieldGrid);
 
@@ -158,17 +159,17 @@ namespace MaterialDesignThemes.UITests.WPF.TextBox
         {
             await using var recorder = new TestRecorder(App);
 
-            IVisualElement grid = await LoadXaml(@"
+            var grid = await LoadXaml<Grid>(@"
 <Grid Margin=""30"">
     <TextBox VerticalAlignment=""Top""
              Text=""Some Text""
              materialDesign:HintAssist.HelperTextFontSize=""20"">
     </TextBox>
 </Grid>");
-            IVisualElement textBox = await grid.GetElement("/TextBox");
-            IVisualElement helpTextBlock = await textBox.GetElement("/Grid/Canvas/TextBlock");
+            var textBox = await grid.GetElement<TextBox>("/TextBox");
+            var helpTextBlock = await textBox.GetElement<TextBlock>("/Grid/Canvas/TextBlock");
             
-            double fontSize = await helpTextBlock.GetProperty<double>(TextBlock.FontSizeProperty.Name);
+            double fontSize = await helpTextBlock.GetFontSize();
 
             Assert.Equal(20, fontSize);
             recorder.Success();
@@ -180,7 +181,7 @@ namespace MaterialDesignThemes.UITests.WPF.TextBox
         {
             await using var recorder = new TestRecorder(App);
 
-            IVisualElement grid = await LoadXaml(@"
+            var grid = await LoadXaml<Grid>(@"
 <Grid Margin=""30"">
     <TextBox
         Style=""{StaticResource MaterialDesignOutlinedTextBox}""
@@ -188,10 +189,10 @@ namespace MaterialDesignThemes.UITests.WPF.TextBox
         materialDesign:HintAssist.Hint=""This is a hint""
     />
 </Grid>");
-            IVisualElement textBox = await grid.GetElement("/TextBox");
-            IVisualElement hint = await textBox.GetElement("Hint");
+            var textBox = await grid.GetElement<TextBox>("/TextBox");
+            var hint = await textBox.GetElement<SmartHint>("Hint");
 
-            Point floatingOffset = await hint.GetProperty<Point>(SmartHint.FloatingOffsetProperty);
+            Point floatingOffset = await hint.GetFloatingOffset();
 
             Assert.Equal(0, floatingOffset.X);
             Assert.InRange(floatingOffset.Y, -22, -20);
@@ -204,14 +205,14 @@ namespace MaterialDesignThemes.UITests.WPF.TextBox
         {
             await using var recorder = new TestRecorder(App);
 
-            IVisualElement grid = await LoadXaml(@"
+            var grid = await LoadXaml<Grid>(@"
 <Grid Margin=""30"">
     <TextBox
         MaxLength=""10""
     />
 </Grid>");
-            IVisualElement textBox = await grid.GetElement("/TextBox");
-            IVisualElement characterCounter = await textBox.GetElement("CharacterCounterTextBlock");
+            var textBox = await grid.GetElement<TextBox>("/TextBox");
+            var characterCounter = await textBox.GetElement<TextBlock>("CharacterCounterTextBlock");
 
             Assert.Equal("0 / 10", await characterCounter.GetText());
 
@@ -227,12 +228,12 @@ namespace MaterialDesignThemes.UITests.WPF.TextBox
         {
             await using var recorder = new TestRecorder(App);
 
-            IVisualElement grid = await LoadXaml(@"
+            var grid = await LoadXaml<Grid>(@"
 <Grid Margin=""30"">
     <TextBox />
 </Grid>");
-            IVisualElement textBox = await grid.GetElement("/TextBox");
-            IVisualElement characterCounter = await textBox.GetElement("CharacterCounterTextBlock");
+            var textBox = await grid.GetElement<TextBox>("/TextBox");
+            var characterCounter = await textBox.GetElement<TextBlock>("CharacterCounterTextBlock");
 
             Assert.False(await characterCounter.GetIsVisible());
 
@@ -244,15 +245,15 @@ namespace MaterialDesignThemes.UITests.WPF.TextBox
         {
             await using var recorder = new TestRecorder(App);
 
-            IVisualElement grid = await LoadXaml(@"
+            var grid = await LoadXaml<Grid>(@"
 <Grid Margin=""30"">
     <TextBox
         MaxLength=""10""
         materialDesign:TextFieldAssist.CharacterCounterVisibility=""Collapsed""
     />
 </Grid>");
-            IVisualElement textBox = await grid.GetElement("/TextBox");
-            IVisualElement characterCounter = await textBox.GetElement("CharacterCounterTextBlock");
+            var textBox = await grid.GetElement<TextBox>("/TextBox");
+            var characterCounter = await textBox.GetElement<TextBlock>("CharacterCounterTextBlock");
 
             Assert.False(await characterCounter.GetIsVisible());
 
@@ -265,7 +266,7 @@ namespace MaterialDesignThemes.UITests.WPF.TextBox
         {
             await using var recorder = new TestRecorder(App);
 
-            IVisualElement grid = await LoadXaml(@"
+            var grid = await LoadXaml<Grid>(@"
 <Grid Margin=""30"">
     <TextBox
         materialDesign:HintAssist.HelperText=""Test"">
@@ -276,10 +277,74 @@ namespace MaterialDesignThemes.UITests.WPF.TextBox
         </materialDesign:HintAssist.HelperTextStyle>
     </TextBox>
 </Grid>");
-            IVisualElement textBox = await grid.GetElement("/TextBox");
-            IVisualElement helperText = await textBox.GetElement("HelperTextTextBlock");
+            var textBox = await grid.GetElement<TextBox>("/TextBox");
+            var helperText = await textBox.GetElement<TextBlock>("HelperTextTextBlock");
 
             Assert.Equal(Colors.Red, await helperText.GetForegroundColor());
+
+            recorder.Success();
+        }
+
+        [Fact]
+        [Description("Issue 2362")]
+        public async Task FloatingOffset_ValuesGetApproprietlyApplied()
+        {
+            await using var recorder = new TestRecorder(App);
+
+            var textBox = await LoadXaml<TextBox>(@"
+<TextBox Style=""{StaticResource MaterialDesignFloatingHintTextBox}""
+         materialDesign:HintAssist.Hint=""Hint with offset""
+         materialDesign:HintAssist.FloatingOffset=""1,-42""
+         Margin=""100"" VerticalAlignment=""Center""
+         Text=""Something"" />
+");
+            var hint = await textBox.GetElement<SmartHint>("Hint");
+            Point offset = await hint.GetFloatingOffset();
+            
+            Assert.Equal(1, offset.X);
+            Assert.Equal(-42, offset.Y);
+
+            recorder.Success();
+        }
+
+        [Fact]
+        [Description("Issue 2390")]
+        public async Task ContextMenu_FollowsTextBoxFontFamily()
+        {
+            await using var recorder = new TestRecorder(App);
+
+            var textBox = await LoadXaml<TextBox>(@"<TextBox FontFamily=""Times New Roman""/>");
+
+            await textBox.RightClick();
+
+            var contextMenu = await textBox.GetElement<ContextMenu>(".ContextMenu");
+
+            var textBoxFont = await textBox.GetFontFamily();
+            Assert.Equal("Times New Roman", textBoxFont?.FamilyNames.Values.First());
+            Assert.Equal(textBoxFont, await contextMenu.GetFontFamily());
+
+            recorder.Success();
+        }
+
+        [Fact]
+        [Description("Issue 2390")]
+        public async Task ContextMenu_UsesInheritedFontFamily()
+        {
+            await using var recorder = new TestRecorder(App);
+
+            var stackPanel = await LoadXaml<StackPanel>(@"
+<StackPanel TextElement.FontFamily=""Times New Roman"">
+    <TextBox />
+</StackPanel>
+");
+            var textBox = await stackPanel.GetElement<TextBox>("/TextBox");
+            await textBox.RightClick();
+
+            var contextMenu = await textBox.GetElement<ContextMenu>(".ContextMenu");
+
+            var textBoxFont = await textBox.GetFontFamily();
+            Assert.Equal("Times New Roman", textBoxFont?.FamilyNames.Values.First());
+            Assert.Equal(textBoxFont, await contextMenu.GetFontFamily());
 
             recorder.Success();
         }

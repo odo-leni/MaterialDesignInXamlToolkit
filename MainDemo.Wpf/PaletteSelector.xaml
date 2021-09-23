@@ -10,7 +10,7 @@
     xmlns:wpf="clr-namespace:MaterialDesignThemes.Wpf;assembly=MaterialDesignThemes.Wpf"
     d:DataContext="{d:DesignInstance domain:PaletteSelectorViewModel}"
     d:DesignHeight="300"
-    d:DesignWidth="300"
+    d:DesignWidth="400"
     mc:Ignorable="d">
     <UserControl.Resources>
         <DataTemplate DataType="{x:Type materialDesignColors:Swatch}">
@@ -129,21 +129,7 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <StackPanel
-                Orientation="Horizontal"
-                Margin="8">
-                <TextBlock
-                    VerticalAlignment="Center"
-                    Text="Light"/>
-
-                <ToggleButton
-                    Margin="8 0 16 0"
-                    IsChecked="{Binding IsDarkTheme}"/>
-
-                <TextBlock
-                    VerticalAlignment="Center"
-                    Text="Dark"/>
-            </StackPanel>
+            <local:ThemeSettings Margin="8" />
 
             <ItemsControl
                 Grid.Row="1"

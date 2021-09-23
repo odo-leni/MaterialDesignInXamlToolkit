@@ -11,32 +11,6 @@ namespace MaterialDesignDemo.Domain
         public PaletteSelectorViewModel()
         {
             Swatches = new SwatchesProvider().Swatches;
-
-            PaletteHelper paletteHelper = new PaletteHelper();
-            ITheme theme = paletteHelper.GetTheme();
-
-            IsDarkTheme = theme.GetBaseTheme() == BaseTheme.Dark;
-
-            if (paletteHelper.GetThemeManager() is { } themeManager)
-            {
-                themeManager.ThemeChanged += (_, e) =>
-                {
-                    IsDarkTheme = e.NewTheme?.GetBaseTheme() == BaseTheme.Dark;
-                };
-            }
-        }
-
-        private bool _isDarkTheme;
-        public bool IsDarkTheme
-        {
-            get => _isDarkTheme;
-            set
-            {
-                if (SetProperty(ref _isDarkTheme, value))
-                {
-                    ModifyTheme(theme => theme.SetBaseTheme(value ? Theme.Dark : Theme.Light));
-                }
-            }
         }
 
         public IEnumerable<Swatch> Swatches { get; }

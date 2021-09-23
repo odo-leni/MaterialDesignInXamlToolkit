@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using MaterialDesignColors;
 using MaterialDesignColors.ColorManipulation;
@@ -35,17 +37,16 @@ namespace MaterialDesignThemes.UITests.WPF.Theme
             await App.InitialzeWithMaterialDesign(BaseTheme.Light, primary, colorAdjustment:new ColorAdjustment());
 
             IWindow window = await App.CreateWindow<ColorAdjustWindow>();
-            await recorder.SaveScreenshot();
 
-            Color windowBackground = await window.GetBackgroundColor();
+            Color? windowBackground = await window.GetBackgroundColor();
 
-            IVisualElement themeToggle = await window.GetElement("/ToggleButton");
-            IVisualElement largeText = await window.GetElement("/TextBlock[0]");
-            IVisualElement smallText = await window.GetElement("/TextBlock[1]");
+            var themeToggle = await window.GetElement<ToggleButton>("/ToggleButton");
+            var largeText = await window.GetElement<TextBlock>("/TextBlock[0]");
+            var smallText = await window.GetElement<TextBlock>("/TextBlock[1]");
 
             await AssertContrastRatio();
 
-            await themeToggle.Click();
+            await themeToggle.LeftClick();
             await Wait.For(async() => await window.GetBackgroundColor() != windowBackground);
 
             await AssertContrastRatio();
@@ -54,16 +55,17 @@ namespace MaterialDesignThemes.UITests.WPF.Theme
 
             async Task AssertContrastRatio()
             {
-                Color largeTextForeground = await largeText.GetForegroundColor();
+                const double tollerance = 0.1;
+                Color? largeTextForeground = await largeText.GetForegroundColor();
                 Color largeTextBackground = await largeText.GetEffectiveBackground();
 
-                Color smallTextForeground = await smallText.GetForegroundColor();
+                Color? smallTextForeground = await smallText.GetForegroundColor();
                 Color smallTextBackground = await smallText.GetEffectiveBackground();
 
-                var largeContrastRatio = ColorAssist.ContrastRatio(largeTextForeground, largeTextBackground);
-                Assert.True(largeContrastRatio >= MaterialDesignSpec.MinimumContrastLargeText, $"Large font contrast ratio '{largeContrastRatio}' does not meet material design spec {MaterialDesignSpec.MinimumContrastLargeText}");
-                var smallContrastRatio = ColorAssist.ContrastRatio(smallTextForeground, smallTextBackground);
-                Assert.True(smallContrastRatio >= MaterialDesignSpec.MinimumContrastSmallText, $"Small font contrast ratio '{smallContrastRatio}' does not meet material design spec {MaterialDesignSpec.MinimumContrastSmallText}");
+                var largeContrastRatio = ColorAssist.ContrastRatio(largeTextForeground.Value, largeTextBackground);
+                Assert.True(largeContrastRatio >= MaterialDesignSpec.MinimumContrastLargeText - tollerance, $"Large font contrast ratio '{largeContrastRatio}' does not meet material design spec {MaterialDesignSpec.MinimumContrastLargeText}");
+                var smallContrastRatio = ColorAssist.ContrastRatio(smallTextForeground.Value, smallTextBackground);
+                Assert.True(smallContrastRatio >= MaterialDesignSpec.MinimumContrastSmallText - tollerance, $"Small font contrast ratio '{smallContrastRatio}' does not meet material design spec {MaterialDesignSpec.MinimumContrastSmallText}");
             }
         }
     }
