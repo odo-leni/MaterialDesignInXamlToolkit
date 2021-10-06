@@ -55,7 +55,7 @@ namespace MaterialDesignThemes.Wpf
         /// </summary>
         public static readonly RoutedCommand CloseDialogCommand = new();
 
-        private static readonly HashSet<DialogHost> LoadedInstances = new();
+        private static readonly HashSet<WeakReference<DialogHost>> LoadedInstances = new();
 
         private DialogOpenedEventHandler? _asyncShowOpenedEventHandler;
         private DialogClosingEventHandler? _asyncShowClosingEventHandler;
@@ -159,7 +159,7 @@ namespace MaterialDesignThemes.Wpf
         ///  Close a modal dialog.
         /// </summary>
         /// <param name="dialogIdentifier"> of the instance where the dialog should be closed. Typically this will match an identifer set in XAML. </param>
-        public static void Close(object dialogIdentifier)
+        public static void Close(object? dialogIdentifier)
             => Close(dialogIdentifier, null);
 
         /// <summary>
@@ -183,7 +183,7 @@ namespace MaterialDesignThemes.Wpf
         /// </summary>
         /// <param name="dialogIdentifier">The identifier to use to retrieve the DialogHost</param>
         /// <returns>The DialogSession if one is in process, or null</returns>
-        public static DialogSession? GetDialogSession(object dialogIdentifier)
+        public static DialogSession? GetDialogSession(object? dialogIdentifier)
         {
             DialogHost dialogHost = GetInstance(dialogIdentifier);
             return dialogHost.CurrentSession;
@@ -194,15 +194,30 @@ namespace MaterialDesignThemes.Wpf
         /// </summary>
         /// <param name="dialogIdentifier">of the instance where the dialog should be closed. Typically this will match an identifer set in XAML.</param>
         /// <returns></returns>
-        public static bool IsDialogOpen(object dialogIdentifier) => GetDialogSession(dialogIdentifier)?.IsEnded == false;
+        public static bool IsDialogOpen(object? dialogIdentifier) => GetDialogSession(dialogIdentifier)?.IsEnded == false;
 
         private static DialogHost GetInstance(object? dialogIdentifier)
         {
             if (LoadedInstances.Count == 0)
                 throw new InvalidOperationException("No loaded DialogHost instances.");
-            LoadedInstances.First().Dispatcher.VerifyAccess();
 
-            var targets = LoadedInstances.Where(dh => dialogIdentifier == null || Equals(dh.Identifier, dialogIdentifier)).ToList();
+            List<DialogHost> targets = new();
+            foreach (var instance in LoadedInstances.ToList())
+            {
+                if (instance.TryGetTarget(out DialogHost? dialogInstance))
+                {
+                    dialogInstance.Dispatcher.VerifyAccess();
+                    if (Equals(dialogIdentifier, dialogInstance.Identifier))
+                    {
+                        targets.Add(dialogInstance);
+                    }
+                }
+                else
+                {
+                    LoadedInstances.Remove(instance);
+                }
+            }
+
             if (targets.Count == 0)
                 throw new InvalidOperationException($"No loaded DialogHost have an {nameof(Identifier)} property matching {nameof(dialogIdentifier)} ('{dialogIdentifier}') argument.");
             if (targets.Count > 1)
@@ -298,7 +313,7 @@ namespace MaterialDesignThemes.Wpf
                     closeParameter = session.CloseParameter;
                     dialogHost.CurrentSession = null;
                 }
-                
+
                 //NB: _dialogTaskCompletionSource is only set in the case where the dialog is shown with Show
                 dialogHost._dialogTaskCompletionSource?.TrySetResult(closeParameter);
 
@@ -491,6 +506,18 @@ namespace MaterialDesignThemes.Wpf
             set => SetValue(OverlayBackgroundProperty, value);
         }
 
+        public static readonly DependencyProperty DialogBackgroundProperty = DependencyProperty.Register(
+            nameof(DialogBackground), typeof(Brush), typeof(DialogHost), new PropertyMetadata(Brushes.White));
+
+        /// <summary>
+        /// Represents the brush for the Dialog's background
+        /// </summary>
+        public Brush? DialogBackground
+        {
+            get => (Brush?)GetValue(DialogBackgroundProperty);
+            set => SetValue(DialogBackgroundProperty, value);
+        }
+
         public override void OnApplyTemplate()
         {
             if (_contentCoverGrid != null)
@@ -659,9 +686,10 @@ namespace MaterialDesignThemes.Wpf
 
         protected override void OnPreviewMouseDown(MouseButtonEventArgs e)
         {
-            var window = Window.GetWindow(this);
-            if (window != null && !window.IsActive)
+            if (Window.GetWindow(this) is { } window && !window.IsActive)
+            {
                 window.Activate();
+            }
             base.OnPreviewMouseDown(e);
         }
 
@@ -721,10 +749,31 @@ namespace MaterialDesignThemes.Wpf
             => IsOpen ? OpenStateName : ClosedStateName;
 
         private void OnUnloaded(object sender, RoutedEventArgs routedEventArgs)
-            => LoadedInstances.Remove(this);
+        {
+            foreach (var weakRef in LoadedInstances.ToList())
+            {
+                if (!weakRef.TryGetTarget(out DialogHost? dialogHost) ||
+                    Equals(dialogHost, this))
+                {
+                    LoadedInstances.Remove(weakRef);
+                }
+            }
+        }
 
         private void OnLoaded(object sender, RoutedEventArgs routedEventArgs)
-            => LoadedInstances.Add(this);
-
+        {
+            foreach (var weakRef in LoadedInstances.ToList())
+            {
+                if (!weakRef.TryGetTarget(out DialogHost? dialogHost))
+                {
+                    LoadedInstances.Remove(weakRef);
+                }
+                if (Equals(dialogHost, this))
+                {
+                    return;
+                }
+            }
+            LoadedInstances.Add(new WeakReference<DialogHost>(this));
+        }
     }
 }
