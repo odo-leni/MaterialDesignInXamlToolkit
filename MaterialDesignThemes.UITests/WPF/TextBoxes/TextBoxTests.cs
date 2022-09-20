@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -37,8 +38,8 @@ namespace MaterialDesignThemes.UITests.WPF.TextBoxes
             var clearButton = await grid.GetElement<Button>("PART_ClearButton");
 
             await textBox.MoveKeyboardFocus();
-            //Delay needed to accout for transition storyboard
-            await Task.Delay(MaterialDesignTextBox.FocusedAimationTime);
+            //Delay needed to account for transition storyboard
+            await Task.Delay(MaterialDesignTextBox.FocusedAnimationTime);
 
             double initialHeight = await textBox.GetActualHeight();
 
@@ -46,7 +47,7 @@ namespace MaterialDesignThemes.UITests.WPF.TextBoxes
             await clearButton.LeftClick();
 
             //Assert
-            await Task.Delay(MaterialDesignTextBox.FocusedAimationTime);
+            await Task.Delay(MaterialDesignTextBox.FocusedAnimationTime);
 
             double height = await textBox.GetActualHeight();
             Assert.Equal(initialHeight, height);
@@ -83,8 +84,8 @@ namespace MaterialDesignThemes.UITests.WPF.TextBoxes
 
             //Act
             await textBox.MoveKeyboardFocus();
-            //Delay needed to accout for transition storyboard
-            await Task.Delay(MaterialDesignTextBox.FocusedAimationTime);
+            //Delay needed to account for transition storyboard
+            await Task.Delay(MaterialDesignTextBox.FocusedAnimationTime);
 
             //Assert
             double height = await textBox.GetActualHeight();
@@ -318,7 +319,7 @@ namespace MaterialDesignThemes.UITests.WPF.TextBoxes
 
         [Fact]
         [Description("Issue 2362")]
-        public async Task FloatingOffset_ValuesGetApproprietlyApplied()
+        public async Task FloatingOffset_ValuesGetAppropriatelyApplied()
         {
             await using var recorder = new TestRecorder(App);
 
@@ -403,6 +404,92 @@ namespace MaterialDesignThemes.UITests.WPF.TextBoxes
             }
 
             recorder.Success();
+        }
+
+        [Fact]
+        [Description("Issue 2596")]
+        public async Task OutlinedTextBox_ValidationErrorMargin_MatchesHelperTextMargin()
+        {
+            await using var recorder = new TestRecorder(App);
+
+            var stackPanel = await LoadXaml<StackPanel>(@"
+<StackPanel>
+    <TextBox Style=""{StaticResource MaterialDesignOutlinedTextBox}""
+        materialDesign:HintAssist.Hint=""Hint text""
+        materialDesign:HintAssist.HelperText=""Helper text"">
+        <TextBox.Text>
+            <Binding RelativeSource=""{RelativeSource Self}"" Path=""Tag"" UpdateSourceTrigger=""PropertyChanged"">
+                <Binding.ValidationRules>
+                    <local:NotEmptyValidationRule ValidatesOnTargetUpdated=""True""/>
+                </Binding.ValidationRules>
+            </Binding>
+        </TextBox.Text>
+    </TextBox>
+</StackPanel>
+", ("local", typeof(NotEmptyValidationRule)));
+
+            var textBox = await stackPanel.GetElement<TextBox>("/TextBox");
+
+            var errorViewer = await textBox.GetElement<Border>("DefaultErrorViewer");
+            var helperTextTextBlock = await textBox.GetElement<TextBlock>("HelperTextTextBlock");
+
+            Thickness? errorMargin = await errorViewer.GetProperty<Thickness>(FrameworkElement.MarginProperty);
+            Thickness? helperTextMargin = await helperTextTextBlock.GetProperty<Thickness>(FrameworkElement.MarginProperty);
+
+            Assert.True(errorMargin.HasValue);
+            Assert.True(helperTextMargin.HasValue);
+            Assert.True(Math.Abs(errorMargin.Value.Left - helperTextMargin.Value.Left) < double.Epsilon,
+                $"Error text and helper text do not have the same Margin.Left values: Error text Margin.Left ({errorMargin.Value.Left}) == Helper text Margin.Left ({helperTextMargin.Value.Left})");
+
+            recorder.Success();
+        }
+
+        [Fact]
+        [Description("Issue 2596")]
+        public async Task FilledTextBox_ValidationErrorMargin_MatchesHelperTextMargin()
+        {
+            await using var recorder = new TestRecorder(App);
+
+            var stackPanel = await LoadXaml<StackPanel>(@"
+<StackPanel>
+    <TextBox Style=""{StaticResource MaterialDesignFilledTextBox}""
+        materialDesign:HintAssist.Hint=""Hint text""
+        materialDesign:HintAssist.HelperText=""Helper text"">
+        <TextBox.Text>
+            <Binding RelativeSource=""{RelativeSource Self}"" Path=""Tag"" UpdateSourceTrigger=""PropertyChanged"">
+                <Binding.ValidationRules>
+                    <local:NotEmptyValidationRule ValidatesOnTargetUpdated=""True""/>
+                </Binding.ValidationRules>
+            </Binding>
+        </TextBox.Text>
+    </TextBox>
+</StackPanel>
+", ("local", typeof(NotEmptyValidationRule)));
+
+            var textBox = await stackPanel.GetElement<TextBox>("/TextBox");
+
+            var errorViewer = await textBox.GetElement<Border>("DefaultErrorViewer");
+            var helperTextTextBlock = await textBox.GetElement<TextBlock>("HelperTextTextBlock");
+
+            Thickness? errorMargin = await errorViewer.GetProperty<Thickness>(FrameworkElement.MarginProperty);
+            Thickness? helperTextMargin = await helperTextTextBlock.GetProperty<Thickness>(FrameworkElement.MarginProperty);
+
+            Assert.True(errorMargin.HasValue);
+            Assert.True(helperTextMargin.HasValue);
+            Assert.True(Math.Abs(errorMargin.Value.Left - helperTextMargin.Value.Left) < double.Epsilon,
+                $"Error text and helper text do not have the same Margin.Left values: Error text Margin.Left ({errorMargin.Value.Left}) == Helper text Margin.Left ({helperTextMargin.Value.Left})");
+
+            recorder.Success();
+        }
+    }
+
+    public class NotEmptyValidationRule : ValidationRule
+    {
+        public override ValidationResult Validate(object value, CultureInfo cultureInfo)
+        {
+            return string.IsNullOrWhiteSpace((value ?? "").ToString())
+                ? new ValidationResult(false, "Field is required.")
+                : ValidationResult.ValidResult;
         }
     }
 }

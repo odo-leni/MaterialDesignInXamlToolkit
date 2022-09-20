@@ -89,8 +89,11 @@
                 </DockPanel>
             </materialDesign:DrawerHost.LeftDrawerContent>
             <DockPanel>
-                <materialDesign:ColorZone Padding="16" materialDesign:ShadowAssist.ShadowDepth="Depth2"
-                                          Mode="PrimaryMid" DockPanel.Dock="Top">
+                <materialDesign:ColorZone
+                    Padding="16"
+                    materialDesign:ElevationAssist.Elevation="Dp4"
+                    Mode="PrimaryMid"
+                    DockPanel.Dock="Top">
                     <DockPanel>
                         <StackPanel Orientation="Horizontal">
                             <ToggleButton
